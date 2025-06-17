@@ -23,7 +23,7 @@ public class SwaggerConfig {
 
         return new OpenAPI()
                 .info(new Info().title("막장동화 API")
-                        .description("망작동화 API Documentation")
+                        .description("막장동화 API Documentation")
                         .version("v1.0"))
                 .addSecurityItem(securityRequirement)  // Security Requirement 추가
                 .schemaRequirement("BearerAuth", securityScheme);  // Security Scheme 추가
