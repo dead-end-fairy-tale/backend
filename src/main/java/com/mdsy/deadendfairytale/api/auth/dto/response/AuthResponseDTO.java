@@ -10,6 +10,7 @@ import lombok.ToString;
 @ToString
 @Builder
 public class AuthResponseDTO {
+    private boolean status;
     private String username;
     private String token;
 }

@@ -3,9 +3,10 @@ package com.mdsy.deadendfairytale.api.auth.controller;
 import com.mdsy.deadendfairytale.api.auth.dto.request.AuthRequestDTO;
 import com.mdsy.deadendfairytale.api.auth.dto.response.AuthResponseDTO;
 import com.mdsy.deadendfairytale.api.auth.service.AuthService;
+import com.mdsy.deadendfairytale.api.exception.DuplicateUserException;
+import com.mdsy.deadendfairytale.api.exception.LoginFailException;
 import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.jwt.JwtService;
-import com.mdsy.deadendfairytale.jwt.JwtTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -51,27 +52,26 @@ public class AuthController {
     }
 
     @PostMapping("/token")
-    public ResponseEntity<?> refreshToken(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("/api/auth/refreshToken : POST");
-        log.info("userDetails : {}", userDetails);
-
-        // userDetails가 null인 경우 (인증되지 않은 사용자)
-        if (userDetails == null) {
-            log.warn("Unauthenticated request to /api/auth/token");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<?> refreshToken(@RequestParam String accessToken) {
+        log.info("/api/auth/token : POST");
+        log.info("accessToken: {}", accessToken);
+        
+        if (accessToken == null || accessToken.trim().isEmpty()) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", false);
+            errorResponse.put("message", "액세스 토큰이 필요합니다.");
+            return ResponseEntity.badRequest().body(errorResponse);
         }
-
-        if(userDetails.getRefreshToken() == null || userDetails.getRefreshToken().trim().isEmpty()) {
-            log.warn("Refresh token is null or empty for user: {}", userDetails.getUsername());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
+        
         try {
-            JwtTokenResponse tokens = jwtService.refreshAccessToken(userDetails.getRefreshToken());
-            return ResponseEntity.ok(tokens);
-        } catch (IllegalArgumentException e) {
-            log.error("Error refreshing token: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            AuthResponseDTO responseDTO = authService.refreshTokenByAccessToken(accessToken);
+            return ResponseEntity.ok().body(responseDTO);
+        } catch (Exception e) {
+            log.error("토큰 갱신 실패: {}", e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
 
@@ -106,5 +106,21 @@ public class AuthController {
             log.error("Error validating token: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    @ExceptionHandler(DuplicateUserException.class)
+    public ResponseEntity<?> handlerDuplicateUserException(DuplicateUserException e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("status", false);
+        errorResponse.put("message", e.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(LoginFailException.class)
+    public ResponseEntity<?> handlerLoginFailException(LoginFailException e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("status", false);
+        errorResponse.put("message", e.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 }
