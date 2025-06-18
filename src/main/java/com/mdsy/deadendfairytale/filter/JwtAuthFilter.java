@@ -13,6 +13,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+
+import static com.mdsy.deadendfairytale.util.JsonUtil.responseJson;
 
 @Slf4j
 @Component
@@ -24,6 +29,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
+        String requestURI = request.getRequestURI();
+        boolean isApiRequest = requestURI.startsWith("/api");
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
@@ -43,14 +50,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                     
-                    log.debug("JWT authentication successful for user: {}", username);
+                    log.debug("토큰 인증에 성공했습니다! user: {}", username);
                 }
             } catch (Exception e) {
-                // 토큰이 유효하지 않은 경우 로그만 남기고 계속 진행
-                log.debug("JWT token validation failed: {}", e.getMessage());
+                // 토큰이 유효하지 않은 경우
+                log.debug("토큰이 유효하지 않습니다!: {}", e.getMessage());
+                if(isApiRequest)
+                    setUnauthorizedResponse(response, "토큰이 유효하지 않습니다!");
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    void setUnauthorizedResponse(HttpServletResponse response, String message) {
+        Map<String, Object> responseMap = new HashMap<>();
+        responseMap.put("status", false);
+        responseMap.put("message", message);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        responseJson(responseMap, response);
     }
 }
