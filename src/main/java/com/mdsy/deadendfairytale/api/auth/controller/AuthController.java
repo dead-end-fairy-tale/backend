@@ -37,6 +37,10 @@ public class AuthController {
         responseDTO.put("status", isSuccess);
         responseDTO.put("message", "회원가입에 성공했습니다.");
 
+        AuthResponseDTO login = authService.login(requestDTO);
+        responseDTO.put("username", login.getUsername());
+        responseDTO.put("token", login.getToken());
+
 
         return ResponseEntity.ok().body(responseDTO);
     }

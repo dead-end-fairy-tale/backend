@@ -19,13 +19,4 @@ public class JsonUtil {
             e.printStackTrace();
         }
     }
-
-
-    // 맨 처음에 있는 정보가 BOM일 경우 지워주는 메서드
-    public static String removeBOM(String str) {
-        if(str.startsWith("\uFEFF"))
-            str = str.substring(1);
-
-        return str;
-    }
 }
