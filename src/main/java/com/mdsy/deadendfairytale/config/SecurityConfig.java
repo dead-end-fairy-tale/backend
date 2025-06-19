@@ -55,6 +55,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/token").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/send-email-verification").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/api-docs/**").permitAll()

@@ -8,11 +8,16 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class AuthRequestDTO {
+public class LoginRequestDTO {
     @NotBlank(message = "유저명은 필수값입니다!")
     private String username;
     @NotBlank(message = "비밀번호는 필수값입니다!")
     private String password;
-    @NotBlank(message = "이메일은 필수값입니다!")
-    private String email;
+
+    protected LoginRequestDTO() {}
+
+    public LoginRequestDTO(AuthRequestDTO requestDTO) {
+        this.username = requestDTO.getUsername();
+        this.password = requestDTO.getPassword();
+    }
 }

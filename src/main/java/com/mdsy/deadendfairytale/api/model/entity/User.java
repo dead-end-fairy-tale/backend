@@ -27,6 +27,10 @@ public class User {
     @Comment("회원 비밀번호[암호화됨]")
     private String password;
 
+    @Column(nullable = false, unique = true)
+    @Comment("회원 이메일")
+    private String email;
+
     @Column(nullable = false)
     @Comment("회원 가입 날짜")
     private LocalDateTime createdAt;

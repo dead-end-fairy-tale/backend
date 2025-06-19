@@ -1,12 +1,15 @@
 package com.mdsy.deadendfairytale.api.auth.controller;
 
 import com.mdsy.deadendfairytale.api.auth.dto.request.AuthRequestDTO;
+import com.mdsy.deadendfairytale.api.auth.dto.request.EmailVerificationRequestDTO;
+import com.mdsy.deadendfairytale.api.auth.dto.request.LoginRequestDTO;
 import com.mdsy.deadendfairytale.api.auth.dto.response.AuthResponseDTO;
 import com.mdsy.deadendfairytale.api.auth.service.AuthService;
 import com.mdsy.deadendfairytale.api.exception.DuplicateUserException;
 import com.mdsy.deadendfairytale.api.exception.LoginFailException;
 import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.jwt.JwtService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -37,7 +40,7 @@ public class AuthController {
         responseDTO.put("status", isSuccess);
         responseDTO.put("message", "회원가입에 성공했습니다.");
 
-        AuthResponseDTO login = authService.login(requestDTO);
+        AuthResponseDTO login = authService.login(new LoginRequestDTO(requestDTO));
         responseDTO.put("username", login.getUsername());
         responseDTO.put("token", login.getToken());
 
@@ -46,7 +49,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequestDTO requestDTO) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO) {
         log.info("/api/auth/login : POST");
         log.info("requestDTO : {}", requestDTO);
 
@@ -54,6 +57,14 @@ public class AuthController {
 
         return ResponseEntity.ok().body(responseDTO);
     }
+
+//    @GetMapping("/logout")
+//    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+//        log.info("/api/auth/logout : POST");
+//        log.info("customUserDetails : {}", customUserDetails);
+//
+//        authService.logout(customUserDetails);
+//    }
 
     @PostMapping("/token")
     public ResponseEntity<?> refreshToken(@RequestParam String accessToken) {
@@ -76,6 +87,40 @@ public class AuthController {
             errorResponse.put("status", false);
             errorResponse.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+    }
+
+    @PostMapping("/send-email-verification")
+    public ResponseEntity<?> sendEmailVerification(@RequestParam String email, HttpServletRequest request) {
+        log.info("/api/auth/send-email-verification : POST");
+        log.info("email: {}", email);
+
+        authService.sendEmailVerification(email);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("message", "인증 코드가 이메일로 발송되었습니다.");
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody EmailVerificationRequestDTO requestDTO, HttpServletRequest request) {
+        log.info("/api/auth/verify-email : POST");
+        log.info("requestDTO : {}", requestDTO);
+
+        boolean isVerified = authService.verifyCodeCheck(requestDTO);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+
+        if(isVerified) {
+            responseDTO.put("status", true);
+            responseDTO.put("message", "이메일 인증이 완료되었습니다.");
+            return ResponseEntity.ok().body(responseDTO);
+        } else {
+            responseDTO.put("status", false);
+            responseDTO.put("message", "인증 코드가 올바르지 않거나 인증시간이 만료되었습니다.");
+            return ResponseEntity.ok().body(responseDTO);
         }
     }
 
