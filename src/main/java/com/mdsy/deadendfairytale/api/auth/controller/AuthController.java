@@ -9,12 +9,15 @@ import com.mdsy.deadendfairytale.api.exception.DuplicateUserException;
 import com.mdsy.deadendfairytale.api.exception.LoginFailException;
 import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.jwt.JwtService;
+import com.mdsy.deadendfairytale.util.ValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -30,9 +33,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody AuthRequestDTO requestDTO) {
+    public ResponseEntity<?> signup(@Validated @RequestBody AuthRequestDTO requestDTO,
+                                    BindingResult result) {
         log.info("/api/auth/signup : POST");
         log.info("requestDTO : {}", requestDTO);
+
+        if(result.hasErrors()) {
+            return ValidationUtil.handleValidationError(result);
+        }
 
         boolean isSuccess = authService.Signup(requestDTO);
 
@@ -49,16 +57,21 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO requestDTO) {
+    public ResponseEntity<?> login(@Validated @RequestBody LoginRequestDTO requestDTO,
+                                   BindingResult result) {
         log.info("/api/auth/login : POST");
         log.info("requestDTO : {}", requestDTO);
+
+        if(result.hasErrors()) {
+            return ValidationUtil.handleValidationError(result);
+        }
 
         AuthResponseDTO responseDTO = authService.login(requestDTO);
 
         return ResponseEntity.ok().body(responseDTO);
     }
 
-    @PostMapping("/reset-password")
+    @RequestMapping(value = "/reset-password", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<?> resetPassword(@RequestParam String email) {
         log.info("/api/auth/find-password : POST");
         log.info("email : {}", email);
@@ -134,9 +147,14 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestBody EmailVerificationRequestDTO requestDTO, HttpServletRequest request) {
+    public ResponseEntity<?> verifyEmail(@Validated @RequestBody EmailVerificationRequestDTO requestDTO,
+                                         BindingResult result) {
         log.info("/api/auth/verify-email : POST");
         log.info("requestDTO : {}", requestDTO);
+
+        if(result.hasErrors()) {
+            return ValidationUtil.handleValidationError(result);
+        }
 
         boolean isVerified = authService.verifyCodeCheck(requestDTO);
 
