@@ -11,8 +11,10 @@ import com.mdsy.deadendfairytale.api.model.entity.EmailVerification;
 import com.mdsy.deadendfairytale.api.model.entity.User;
 import com.mdsy.deadendfairytale.api.repository.EmailVerificationRepository;
 import com.mdsy.deadendfairytale.api.repository.UserRepository;
+import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.util.EmailUtil;
 import com.mdsy.deadendfairytale.util.JwtUtil;
+import com.mdsy.deadendfairytale.util.SecureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -141,7 +143,12 @@ public class AuthService {
 
         emailVerificationRepository.save(emailVerification);
 
-        EmailUtil.sendEmail(mailSender, email, verificationCode);
+        String subject = "막장동화 이메일 인증 코드";
+        String sendMessage = "막장동화 회원가입을 위한 이메일 인증 코드입니다.\n\n" +
+                "인증 코드: " + verificationCode + "\n\n" +
+                "이 코드는 5분간 유효합니다.";
+
+        EmailUtil.sendEmail(mailSender, email, subject, sendMessage);
     }
 
     public boolean verifyCodeCheck(EmailVerificationRequestDTO requestDTO) {
@@ -161,5 +168,32 @@ public class AuthService {
                         () -> new InfoNotFoundException("먼저 이메일 인증을 신청해주세요!")
                 );
 
+    }
+
+    public void findPassword(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new InfoNotFoundException("가입되지 않은 이메일입니다!")
+        );
+
+        String newPassword = SecureUtil.generateRandomMixStr(10, true);
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+
+        String subject = "막장동화 비밀번호 변경";
+        String sendMessage = "막장동화 비밀번호 변경 안내입니다.\n\n" +
+                "변경된 비밀번호 : " + newPassword + "\n" +
+                "본인이 비밀번호를 변경하지 않았다면 즉시 비밀번호를 재설정 해주세요.";
+
+        userRepository.save(user);
+
+        EmailUtil.sendEmail(mailSender, user.getEmail(), subject, sendMessage);
+    }
+
+    public void changePassword(CustomUserDetails userDetails, String password) {
+        User user = userRepository.findById(userDetails.getUsername()).orElseThrow();
+
+        user.setPassword(passwordEncoder.encode(password));
+
+        userRepository.save(user);
     }
 }

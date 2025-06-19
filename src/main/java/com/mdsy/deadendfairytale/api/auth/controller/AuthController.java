@@ -58,6 +58,35 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String email) {
+        log.info("/api/auth/find-password : POST");
+        log.info("email : {}", email);
+
+        authService.findPassword(email);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("message", "비밀번호를 초기화 하였습니다. \n이메일에서 변경된 비밀번호를 확인해주세요.");
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                            @RequestParam String password) {
+        log.info("/api/auth/change-password : POST");
+        log.info("password : {}", password);
+
+        authService.changePassword(userDetails, password);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("message", "비밀번호를 변경하였습니다.");
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
 //    @GetMapping("/logout")
 //    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
 //        log.info("/api/auth/logout : POST");
