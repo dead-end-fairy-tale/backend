@@ -1,5 +1,6 @@
 package com.mdsy.deadendfairytale.api.auth.dto.request;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +14,7 @@ public class AuthRequestDTO {
     private String username;
     @NotBlank(message = "비밀번호는 필수값입니다!")
     private String password;
+    @Email(message = "이메일 형식이 아닙니다!")
     @NotBlank(message = "이메일은 필수값입니다!")
     private String email;
 }
