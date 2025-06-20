@@ -108,7 +108,7 @@ public class AuthController {
 
         Map<String, Object> responseDTO = new HashMap<>();
         responseDTO.put("status", true);
-        responseDTO.put("message", "로그아웃되 었습니다.");
+        responseDTO.put("message", "로그아웃 되었습니다.");
 
         return ResponseEntity.ok().body(responseDTO);
     }
