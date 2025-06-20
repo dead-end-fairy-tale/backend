@@ -196,4 +196,12 @@ public class AuthService {
 
         userRepository.save(user);
     }
+
+    public void logout(CustomUserDetails customUserDetails) {
+        User user = userRepository.findById(customUserDetails.getUsername()).orElseThrow();
+
+        user.setRefreshToken(null);
+
+        userRepository.save(user);
+    }
 }

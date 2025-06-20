@@ -10,7 +10,6 @@ import com.mdsy.deadendfairytale.api.exception.LoginFailException;
 import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.jwt.JwtService;
 import com.mdsy.deadendfairytale.util.ValidationUtil;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -100,13 +99,19 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
-//    @GetMapping("/logout")
-//    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-//        log.info("/api/auth/logout : POST");
-//        log.info("customUserDetails : {}", customUserDetails);
-//
-//        authService.logout(customUserDetails);
-//    }
+    @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        log.info("/api/auth/logout : POST");
+        log.info("customUserDetails : {}", customUserDetails);
+
+        authService.logout(customUserDetails);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("message", "로그아웃되 었습니다.");
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
 
     @PostMapping("/token")
     public ResponseEntity<?> refreshToken(@RequestParam String accessToken) {
@@ -133,13 +138,19 @@ public class AuthController {
     }
 
     @PostMapping("/send-email-verification")
-    public ResponseEntity<?> sendEmailVerification(@RequestParam String email, HttpServletRequest request) {
+    public ResponseEntity<?> sendEmailVerification(@RequestParam String email) {
         log.info("/api/auth/send-email-verification : POST");
         log.info("email: {}", email);
+        Map<String, Object> responseDTO = new HashMap<>();
+
+        if (!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+            responseDTO.put("status", false);
+            responseDTO.put("message", "이메일 형식이 아닙니다!");
+            return ResponseEntity.badRequest().body(responseDTO);
+        }
 
         authService.sendEmailVerification(email);
 
-        Map<String, Object> responseDTO = new HashMap<>();
         responseDTO.put("status", true);
         responseDTO.put("message", "인증 코드가 이메일로 발송되었습니다.");
 
