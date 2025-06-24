@@ -38,7 +38,7 @@ public class SecurityConfig {
             responseData.put("message", "인증이 필요합니다.");
 
             if (request.getRequestURI().startsWith("/api")) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().write(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(responseData));
                 response.getWriter().flush();
                 response.getWriter().close();
@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/token").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/send-email-verification").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/auth/reset-password").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/api-docs/**").permitAll()
