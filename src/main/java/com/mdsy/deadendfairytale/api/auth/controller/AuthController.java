@@ -6,13 +6,22 @@ import com.mdsy.deadendfairytale.api.auth.dto.request.LoginRequestDTO;
 import com.mdsy.deadendfairytale.api.auth.dto.response.AuthResponseDTO;
 import com.mdsy.deadendfairytale.api.auth.service.AuthService;
 import com.mdsy.deadendfairytale.api.exception.DuplicateUserException;
+import com.mdsy.deadendfairytale.api.exception.InfoNotFoundException;
 import com.mdsy.deadendfairytale.api.exception.LoginFailException;
 import com.mdsy.deadendfairytale.jwt.CustomUserDetails;
 import com.mdsy.deadendfairytale.jwt.JwtService;
 import com.mdsy.deadendfairytale.util.ValidationUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.angus.mail.iap.Response;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -31,6 +40,29 @@ public class AuthController {
     private final JwtService jwtService;
     private final AuthService authService;
 
+    @Operation(summary = "회원가입 API", description = "회원가입 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "회원가입 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string",
+                                    "username": "string",
+                                    "token": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "필수값 누락",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Validated @RequestBody AuthRequestDTO requestDTO,
                                     BindingResult result) {
@@ -55,6 +87,20 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "로그인 API", description = "로그인 API 입니다")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그인 성공",
+                    content = {@Content(schema = @Schema(implementation = AuthResponseDTO.class))}),
+            @ApiResponse(responseCode = "400", description = "로그인 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                              """
+                              {
+                              "status": false,
+                              "message": "string"
+                              }
+                              """))}),
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@Validated @RequestBody LoginRequestDTO requestDTO,
                                    BindingResult result) {
@@ -70,6 +116,27 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "패스워드 초기화 API", description = "패스워드 초기화 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "초기화 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "초기화 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @RequestMapping(value = "/reset-password", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<?> resetPassword(@RequestParam String email) {
         log.info("/api/auth/find-password : POST");
@@ -84,6 +151,36 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "패스워드 변경 API", description = "패스워드 변경 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "패스워드 변경 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "패스워드 변경 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "401", description = "로그인 하지 않음",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
                                             @RequestParam String password) {
@@ -99,6 +196,37 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "로그아웃 API",
+            description = "로그아웃 API 입니다. \n로그아웃 시 프론트에서도 토큰과 유저정보를 지워줘야 합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "로그아웃 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "401", description = "로그인 하지 않음",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
         log.info("/api/auth/logout : POST");
@@ -113,6 +241,29 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "토큰 갱신 API", description = "토큰 갱신 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "토큰 갱신 성공",
+                    content = {@Content(schema = @Schema(implementation = AuthResponseDTO.class))}),
+            @ApiResponse(responseCode = "400", description = "토큰 갱신 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "401", description = "로그인 하지 않음",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @PostMapping("/token")
     public ResponseEntity<?> refreshToken(@RequestParam String accessToken) {
         log.info("/api/auth/token : POST");
@@ -137,6 +288,27 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "이메일 인증 API", description = "이메일 인증 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이메일 인증 발송 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "이메일 인증 발송 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @PostMapping("/send-email-verification")
     public ResponseEntity<?> sendEmailVerification(@RequestParam String email) {
         log.info("/api/auth/send-email-verification : POST");
@@ -157,6 +329,36 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "이메일 인증 확인 API", description = "이메일 인증 확인 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "이메일 인증 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "이메일 인증 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "403", description = "인증 코드가 올바르지 않거나 인증시간이 만료",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
     @PostMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@Validated @RequestBody EmailVerificationRequestDTO requestDTO,
                                          BindingResult result) {
@@ -178,7 +380,7 @@ public class AuthController {
         } else {
             responseDTO.put("status", false);
             responseDTO.put("message", "인증 코드가 올바르지 않거나 인증시간이 만료되었습니다.");
-            return ResponseEntity.ok().body(responseDTO);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(responseDTO);
         }
     }
 
@@ -225,6 +427,14 @@ public class AuthController {
 
     @ExceptionHandler(LoginFailException.class)
     public ResponseEntity<?> handlerLoginFailException(LoginFailException e) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("status", false);
+        errorResponse.put("message", e.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(InfoNotFoundException.class)
+    public ResponseEntity<?> handlerInfoNotFoundException(InfoNotFoundException e) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("status", false);
         errorResponse.put("message", e.getMessage());
