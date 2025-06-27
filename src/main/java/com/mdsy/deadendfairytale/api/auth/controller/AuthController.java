@@ -164,19 +164,23 @@ public class AuthController {
     @Operation(summary = "아이디 찾기 API", description = "이메일을 통해 아이디를 찾는 API 입니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "아이디 찾기 성공",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-            schema = @Schema(example =
-                    """
-                    "status": true,
-                    "id": "string"
-                    """))),
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                """
+                                {
+                                "status": true,
+                                "id": "string"
+                                }
+                                """))),
             @ApiResponse(responseCode = "400", description = "아이디 찾기 실패",
-            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-            schema = @Schema(example =
-                    """
-                    "status": false,
-                    "message": "string"
-                    """)))
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                """
+                                {
+                                "status": false,
+                                "message": "string"
+                                }
+                                """))),
     })
     @GetMapping("/find-id")
     public ResponseEntity<?> findId(
