@@ -116,6 +116,84 @@ public class AuthController {
         return ResponseEntity.ok().body(responseDTO);
     }
 
+    @Operation(summary = "로그아웃 API",
+            description = "로그아웃 API 입니다. \n로그아웃 시 프론트에서도 토큰과 유저정보를 지워줘야 합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "로그아웃 성공",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": true,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "400", description = "로그아웃 실패",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+            @ApiResponse(responseCode = "401", description = "로그인 하지 않음",
+                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(example =
+                                    """
+                                    {
+                                    "status": false,
+                                    "message": "string"
+                                    }
+                                    """))}),
+    })
+    @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        log.info("/api/auth/logout : POST");
+        log.info("customUserDetails : {}", customUserDetails);
+
+        authService.logout(customUserDetails);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("message", "로그아웃 되었습니다.");
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
+    @Operation(summary = "아이디 찾기 API", description = "이메일을 통해 아이디를 찾는 API 입니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "아이디 찾기 성공",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+            schema = @Schema(example =
+                    """
+                    "status": true,
+                    "id": "string"
+                    """))),
+            @ApiResponse(responseCode = "400", description = "아이디 찾기 실패",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+            schema = @Schema(example =
+                    """
+                    "status": false,
+                    "message": "string"
+                    """)))
+    })
+    @GetMapping("/find-id")
+    public ResponseEntity<?> findId(
+            @Schema(example = "example@example.com")
+            @RequestParam String email) {
+        log.info("/api/auth/find-id : POST");
+        log.info("email : {}", email);
+
+        String findId = authService.findId(email);
+
+        Map<String, Object> responseDTO = new HashMap<>();
+        responseDTO.put("status", true);
+        responseDTO.put("id", findId);
+
+        return ResponseEntity.ok().body(responseDTO);
+    }
+
     @Operation(summary = "패스워드 초기화 API", description = "패스워드 초기화 API 입니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "초기화 성공",
@@ -138,7 +216,9 @@ public class AuthController {
                                     """))}),
     })
     @RequestMapping(value = "/reset-password", method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<?> resetPassword(@RequestParam String email) {
+    public ResponseEntity<?> resetPassword(
+            @Schema(example = "example@example.com")
+            @RequestParam String email) {
         log.info("/api/auth/find-password : POST");
         log.info("email : {}", email);
 
@@ -192,51 +272,6 @@ public class AuthController {
         Map<String, Object> responseDTO = new HashMap<>();
         responseDTO.put("status", true);
         responseDTO.put("message", "비밀번호를 변경하였습니다.");
-
-        return ResponseEntity.ok().body(responseDTO);
-    }
-
-    @Operation(summary = "로그아웃 API",
-            description = "로그아웃 API 입니다. \n로그아웃 시 프론트에서도 토큰과 유저정보를 지워줘야 합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "로그아웃 성공",
-                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(example =
-                                    """
-                                    {
-                                    "status": true,
-                                    "message": "string"
-                                    }
-                                    """))}),
-            @ApiResponse(responseCode = "400", description = "로그아웃 실패",
-                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(example =
-                                    """
-                                    {
-                                    "status": false,
-                                    "message": "string"
-                                    }
-                                    """))}),
-            @ApiResponse(responseCode = "401", description = "로그인 하지 않음",
-                    content = {@Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(example =
-                                    """
-                                    {
-                                    "status": false,
-                                    "message": "string"
-                                    }
-                                    """))}),
-    })
-    @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<?> logout(@AuthenticationPrincipal CustomUserDetails customUserDetails) {
-        log.info("/api/auth/logout : POST");
-        log.info("customUserDetails : {}", customUserDetails);
-
-        authService.logout(customUserDetails);
-
-        Map<String, Object> responseDTO = new HashMap<>();
-        responseDTO.put("status", true);
-        responseDTO.put("message", "로그아웃 되었습니다.");
 
         return ResponseEntity.ok().body(responseDTO);
     }
@@ -310,7 +345,9 @@ public class AuthController {
                                     """))}),
     })
     @PostMapping("/send-email-verification")
-    public ResponseEntity<?> sendEmailVerification(@RequestParam String email) {
+    public ResponseEntity<?> sendEmailVerification(
+            @Schema(example = "example@example.com")
+            @RequestParam String email) {
         log.info("/api/auth/send-email-verification : POST");
         log.info("email: {}", email);
         Map<String, Object> responseDTO = new HashMap<>();

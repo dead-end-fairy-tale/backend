@@ -204,4 +204,12 @@ public class AuthService {
 
         userRepository.save(user);
     }
+
+    public String findId(String email) {
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> new InfoNotFoundException("가입되지 않은 이메일입니다!")
+        );
+
+        return user.getUserId();
+    }
 }
